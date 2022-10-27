@@ -46,3 +46,6 @@ def main():
         predicted_val = pickle_model.predict(arr.reshape(1, -1))
         st.header("Boston House Price According to our Model is : " +
                   str(predicted_val[0]))
+
+if __name__ == '__main__':
+    main()
