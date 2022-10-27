@@ -1,51 +1,36 @@
-import streamlit as st
-import numpy as np
+import json
 import pickle
 
+from flask import Flask,request,app,jsonify,url_for,render_template
+import numpy as np
+import pandas as pd
 
-def main():
-    st.balloons()
-    with st.container():
-        col1, col2 = st.columns(2)
-        with col1:
-            crim = st.number_input("CRIM")
-            zn = st.number_input("ZN")
-            indus = st.number_input("INDUS")
-            chas = st.number_input("CHAS")
-            nox = st.number_input("NOX")
-            rm = st.number_input("RM")
-            age = st.number_input("AGE")
-        with col2:
-            di = st.number_input("DIS")
-            rad = st.number_input("RAD")
-            tax = st.number_input("TAX")
-            ptratio = st.number_input("PTRATIO")
-            b = st.number_input("B")
-            lstat = st.number_input("LSTAT")
+app=Flask(__name__)
+## Load the model
+model=pickle.load(open('boston_house_price_prediction.pkl','rb'))
 
-    arr = np.array([
-        crim,
-        zn,
-        indus,
-        chas,
-        nox,
-        rm,
-        age,
-        di,
-        rad,
-        tax,
-        ptratio,
-        b,
-        lstat,
-    ])
+@app.route('/')
+def home():
+    return render_template('home.html')
 
-    # st.write(arr)
-    if st.button("PREDICT"):
-        pickle_model = pickle.load(
-            open('boston_house_price_prediction.pkl', 'rb'))
-        predicted_val = pickle_model.predict(arr.reshape(1, -1))
-        st.header("Boston House Price According to our Model is : " +
-                  str(predicted_val[0]))
+@app.route('/predict_api',methods=['POST'])
+def predict_api():
+    data=request.json['data']
+    print(data)
+    print(np.array(list(data.values())).reshape(1,-1))
+    output=model.predict(np.array(list(data.values())).reshape(1,-1))
+    print(output[0])
+    return jsonify(output[0])
 
-if __name__ == '__main__':
-    main()
+@app.route('/predict',methods=['POST'])
+def predict():
+    data=[float(x) for x in request.form.values()]
+    final_input=np.array(data).reshape(1,-1)
+    print(final_input)
+    output=model.predict(final_input)[0]
+    return render_template("home.html",prediction_text="The House price prediction is {}".format(output))
+
+
+
+if __name__=="__main__":
+    app.run(debug=True)
